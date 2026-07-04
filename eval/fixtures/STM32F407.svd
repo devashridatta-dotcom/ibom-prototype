@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<device schemaVersion="1.1">
+  <name>STM32F407</name>
+  <version>1.0</version>
+  <description>STM32F407 IBOM prototype fixture — automotive-relevant peripherals</description>
+  <addressUnitBits>8</addressUnitBits>
+  <width>32</width>
+  <peripherals>
+    <peripheral>
+      <name>BRAKE_CTL</name>
+      <description>Brake actuation MMIO — ASIL-D safety-critical</description>
+      <baseAddress>0x40020000</baseAddress>
+      <registers>
+        <register><name>STATUS</name><description>Brake status (fault/ready/pressure/temperature)</description><addressOffset>0x00</addressOffset><access>read-only</access></register>
+        <register><name>CTRL</name><description>Brake actuation control (ENABLE/FORCE_VALUE/RAMP_RATE)</description><addressOffset>0x04</addressOffset><access>read-write</access></register>
+        <register><name>IRQ_MASK</name><description>Interrupt mask (FAULT_MASK/PRESSURE_MASK)</description><addressOffset>0x08</addressOffset><access>read-write</access></register>
+        <register><name>WATCHDOG</name><description>Safety watchdog — refresh every 10ms with 0xDEAD</description><addressOffset>0x0C</addressOffset><access>write-only</access></register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>ABS_CTL</name>
+      <description>Anti-lock braking controller — ASIL-B</description>
+      <baseAddress>0x40021000</baseAddress>
+      <registers>
+        <register><name>WHEEL_SPEED</name><description>4-wheel speed sensor readings (packed bytes)</description><addressOffset>0x00</addressOffset><access>read-only</access></register>
+        <register><name>ABS_CTRL</name><description>ABS enable and slip threshold control</description><addressOffset>0x04</addressOffset><access>read-write</access></register>
+        <register><name>IRQ_STATUS</name><description>ABS interrupt status (SLIP_DETECTED/INTERVENTION)</description><addressOffset>0x08</addressOffset><access>read-write</access></register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>CAN_GW</name>
+      <description>CAN gateway — trust boundary internal-to-external. Upper bound: 0x40023FFF</description>
+      <baseAddress>0x40022000</baseAddress>
+      <registers>
+        <register><name>MCR</name><description>CAN master control (INRQ/SLEEP/TXFP/RFLM)</description><addressOffset>0x00</addressOffset><access>read-write</access></register>
+        <register><name>MSR</name><description>CAN master status (INAK/SLAK/ERRI)</description><addressOffset>0x04</addressOffset><access>read-only</access></register>
+        <register><name>TSR</name><description>CAN transmit status</description><addressOffset>0x08</addressOffset><access>read-write</access></register>
+        <register><name>ACCESS_LIMIT</name><description>Gateway upper address boundary for external bus access</description><addressOffset>0x10</addressOffset><access>read-write</access></register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>DMA1</name>
+      <description>DMA controller 1 — brake and ABS channels</description>
+      <baseAddress>0x40026000</baseAddress>
+      <registers>
+        <register><name>LISR</name><description>DMA low interrupt status</description><addressOffset>0x00</addressOffset><access>read-only</access></register>
+        <register><name>LIFCR</name><description>DMA low interrupt flag clear</description><addressOffset>0x08</addressOffset><access>write-only</access></register>
+        <register><name>S0CR</name><description>DMA stream 0 config (brake DMA channel)</description><addressOffset>0x10</addressOffset><access>read-write</access></register>
+        <register><name>S0NDTR</name><description>DMA stream 0 number of data items</description><addressOffset>0x14</addressOffset><access>read-write</access></register>
+        <register><name>S0PAR</name><description>DMA stream 0 peripheral address</description><addressOffset>0x18</addressOffset><access>read-write</access></register>
+        <register><name>S0M0AR</name><description>DMA stream 0 memory address</description><addressOffset>0x1C</addressOffset><access>read-write</access></register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>SAFETY_MON</name>
+      <description>System safety monitor — supervises ASIL-D subsystems</description>
+      <baseAddress>0x40030000</baseAddress>
+      <registers>
+        <register><name>SYS_STATUS</name><description>System safety status (ALL_SAFE/BRAKE_SAFE/ABS_SAFE/FAULT_CODE)</description><addressOffset>0x00</addressOffset><access>read-only</access></register>
+        <register><name>SHUTDOWN_CMD</name><description>Emergency/graceful shutdown command</description><addressOffset>0x04</addressOffset><access>write-only</access></register>
+        <register><name>WATCHDOG_CTL</name><description>System watchdog enable and timeout</description><addressOffset>0x08</addressOffset><access>read-write</access></register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>TIM2</name>
+      <description>Timer 2 — brake PWM generation</description>
+      <baseAddress>0x40000000</baseAddress>
+      <registers>
+        <register><name>CR1</name><description>Timer control (CEN/UDIS/URS)</description><addressOffset>0x00</addressOffset><access>read-write</access></register>
+        <register><name>CNT</name><description>Counter register</description><addressOffset>0x24</addressOffset><access>read-write</access></register>
+        <register><name>PSC</name><description>Prescaler register</description><addressOffset>0x28</addressOffset><access>read-write</access></register>
+        <register><name>ARR</name><description>Auto-reload register (PWM period)</description><addressOffset>0x2C</addressOffset><access>read-write</access></register>
+      </registers>
+    </peripheral>
+  </peripherals>
+</device>
