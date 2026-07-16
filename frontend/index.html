@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IBOM — Interface Bill of Materials</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--surface-1:#161b22;--surface-2:#21262d;--border:#30363d;
+  --text:#e6edf3;--text-muted:#8b949e;--text-sub:#c9d1d9;
+  --accent:#2a78d6;--accent-bg:#1a2d4a;--accent-text:#79b8ff;
+  --success:#3fb950;--success-bg:#1a3a1a;--success-text:#7ee787;
+  --danger:#f85149;--danger-bg:#3d1212;--danger-text:#ffa198;
+  --warning:#e3b341;--warning-bg:#2d2200;--warning-text:#e3b341;
+  --radius:6px;--font:system-ui,-apple-system,sans-serif;--mono:'SF Mono',Consolas,monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.app{display:flex;flex:1;overflow:hidden}
+.sidebar{width:210px;min-width:210px;background:var(--surface-1);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.logo{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:600;color:var(--text)}
+.logo-sub{font-size:10px;color:var(--text-muted);margin-top:1px}
+nav{flex:1;padding:8px}
+.nav-section{font-size:10px;font-weight:600;color:var(--text-muted);padding:8px 10px 4px;letter-spacing:0.8px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text-muted);margin-bottom:2px;border:none;background:none;width:100%;text-align:left;transition:all 0.15s}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent-text)}
+.nav-item i{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);padding:5px 8px;background:var(--surface-2);border-radius:var(--radius)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-1)}
+.page-title{font-size:15px;font-weight:600;color:var(--text)}
+.page-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.badge-danger{background:var(--danger-bg);color:var(--danger-text);border:1px solid var(--danger)}
+.badge-success{background:var(--success-bg);color:var(--success-text);border:1px solid var(--success)}
+.badge-accent{background:var(--accent-bg);color:var(--accent-text);border:1px solid var(--accent)}
+.badge-warning{background:var(--warning-bg);color:var(--warning-text);border:1px solid var(--warning)}
+.content{flex:1;overflow-y:auto;padding:20px}
+.view{display:none}
+.view.active{display:block}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric-card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.metric-label{font-size:11px;color:var(--text-muted);margin-bottom:6px}
+.metric-val{font-size:26px;font-weight:600;color:var(--text);line-height:1}
+.metric-sub{font-size:11px;color:var(--text-muted);margin-top:4px}
+.metric-val.danger{color:var(--danger)}
+.metric-val.success{color:var(--success)}
+.metric-val.warning{color:var(--warning)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.panel{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
+.panel-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2)}
+.panel-title{font-size:13px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px}
+.panel-title i{font-size:15px;color:var(--text-muted)}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:500;color:var(--text-muted);padding:8px 16px;text-align:left;background:var(--surface-2);border-bottom:1px solid var(--border)}
+td{font-size:12px;color:var(--text-sub);padding:9px 16px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.sev{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;display:inline-block}
+.sev-critical{background:var(--danger-bg);color:var(--danger-text);border:1px solid var(--danger)}
+.sev-high{background:var(--warning-bg);color:var(--warning-text);border:1px solid var(--warning)}
+.sev-medium{background:var(--accent-bg);color:var(--accent-text);border:1px solid var(--accent)}
+.sev-pass{background:var(--success-bg);color:var(--success-text);border:1px solid var(--success)}
+.sev-none{background:var(--surface-2);color:var(--text-muted);border:1px solid var(--border)}
+.detect-yes{color:var(--success);font-size:16px;font-weight:600}
+.detect-no{color:var(--danger);font-size:16px;font-weight:600}
+.mono{font-family:var(--mono);font-size:11px}
+.prog-wrap{padding:14px 16px}
+.prog-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.prog-row:last-child{margin-bottom:0}
+.prog-label{font-size:12px;color:var(--text-sub);min-width:140px}
+.prog-bg{flex:1;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.prog-bar{height:100%;border-radius:3px;transition:width 0.5s ease}
+.prog-val{font-size:12px;font-weight:500;color:var(--text);min-width:45px;text-align:right}
+.layer-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border)}
+.layer-row:last-child{border-bottom:none}
+.layer-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.layer-lbl{font-size:11px;font-weight:600;color:var(--text-muted);min-width:24px;font-family:var(--mono)}
+.layer-name{font-size:12px;color:var(--text-sub);flex:1}
+.layer-count{font-size:11px;color:var(--text-muted);background:var(--surface-2);padding:1px 7px;border-radius:20px;border:1px solid var(--border)}
+.edge-row{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border)}
+.edge-row:last-child{border-bottom:none}
+.edge-name{font-family:var(--mono);font-size:11px;color:var(--accent-text)}
+.edge-name.novel{color:var(--success-text)}
+.edge-domain{font-size:11px;color:var(--text-muted)}
+.triad-grid{display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;gap:0;align-items:center;margin-bottom:12px}
+.triad-card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.triad-card.ibom{border-color:var(--accent);background:var(--accent-bg)}
+.triad-arrow{text-align:center;color:var(--text-muted);font-size:18px}
+.triad-title{font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.triad-card.ibom .triad-title{color:var(--accent-text)}
+.triad-item{font-size:11px;color:var(--text-sub);padding:3px 0;display:flex;align-items:center;gap:6px}
+.triad-item i{font-size:13px;color:var(--text-muted)}
+.query-box{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.query-label{font-size:11px;color:var(--text-muted);margin-bottom:10px;font-style:italic}
+.qstep{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.qstep:last-child{margin-bottom:0}
+.qnum{width:20px;height:20px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.qtext{color:var(--text-sub);flex:1}
+.qresult{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:3px;background:var(--success-bg);color:var(--success-text);border:1px solid var(--success)}
+.cwe-bar-wrap{padding:14px 16px}
+.cwe-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.cwe-label{font-size:12px;color:var(--text-sub);min-width:130px}
+.cwe-bg{flex:1;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.cwe-fill{height:100%;border-radius:4px}
+.cwe-val{font-size:11px;font-weight:500;min-width:50px;text-align:right}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">IB</div>
+      <div>
+        <div class="logo-text">IBOM</div>
+        <div class="logo-sub">Interface Bill of Materials v0.1</div>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-section">Analysis</div>
+      <button class="nav-item active" onclick="show('dashboard',this)"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
+      <button class="nav-item" onclick="show('hsig',this)"><i class="ti ti-topology-star"></i>HSIG explorer</button>
+      <button class="nav-item" onclick="show('drift',this)"><i class="ti ti-activity"></i>Drift analysis</button>
+      <div class="nav-section">Supply Chain</div>
+      <button class="nav-item" onclick="show('triad',this)"><i class="ti ti-link"></i>BOM triad</button>
+      <button class="nav-item" onclick="show('cwe',this)"><i class="ti ti-shield-check"></i>CWE coverage</button>
+      <button class="nav-item" onclick="show('compliance',this)"><i class="ti ti-file-certificate"></i>Compliance</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-pill"><span class="dot"></span>BrakeControlECU v3.1.2 — Live</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="page-title">Dashboard</div>
+        <div class="page-sub" id="page-sub">IBOM health and interface overview</div>
+      </div>
+      <div class="topbar-actions">
+        <span class="badge badge-danger"><i class="ti ti-alert-triangle"></i> 9 drift events</span>
+        <span class="badge badge-success">ASIL-D recall 100%</span>
+        <span class="badge badge-accent">9 pages · SCORED '26</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="v-dashboard" class="view active">
+        <div class="metrics">
+          <div class="metric-card"><div class="metric-label">Total nodes</div><div class="metric-val">52</div><div class="metric-sub">6 layers · L0–L5</div></div>
+          <div class="metric-card"><div class="metric-label">Typed edges</div><div class="metric-val">66</div><div class="metric-sub">8 edge classes</div></div>
+          <div class="metric-card"><div class="metric-label">L4 interfaces</div><div class="metric-val">35</div><div class="metric-sub">10 safety-critical</div></div>
+          <div class="metric-card"><div class="metric-label">Drift detected</div><div class="metric-val danger">6/6</div><div class="metric-sub">SBOM-only: 0/6</div></div>
+        </div>
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="ti ti-alert-triangle"></i>Active drift events</span><span class="badge badge-danger">2 CRITICAL</span></div>
+            <table>
+              <thead><tr><th>Interface</th><th>Drift type</th><th>Severity</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">IF-BRAKE_CTL-STATUS</td><td class="mono">MMIO_ADDRESS_SHIFTED</td><td><span class="sev sev-critical">CRITICAL</span></td></tr>
+                <tr><td class="mono">IF-CAN_GW-ACCESS</td><td class="mono">MMIO_ADDRESS_SHIFTED</td><td><span class="sev sev-critical">CRITICAL</span></td></tr>
+                <tr><td class="mono">IF-HLS-THRESHOLD-001</td><td class="mono">HLS_LINEAGE_BREAK</td><td><span class="sev sev-high">HIGH</span></td></tr>
+                <tr><td class="mono">IF-TIM2-CR1</td><td class="mono">INTERFACE_RETIRED</td><td><span class="sev sev-high">HIGH</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="ti ti-chart-bar"></i>Extraction accuracy</span></div>
+            <div class="prog-wrap">
+              <div class="prog-row"><span class="prog-label">Simulated precision</span><div class="prog-bg"><div class="prog-bar" style="width:96.7%;background:var(--accent)"></div></div><span class="prog-val">96.7%</span></div>
+              <div class="prog-row"><span class="prog-label">Simulated recall</span><div class="prog-bg"><div class="prog-bar" style="width:87%;background:var(--accent)"></div></div><span class="prog-val">87%</span></div>
+              <div class="prog-row"><span class="prog-label">Zephyr precision</span><div class="prog-bg"><div class="prog-bar" style="width:100%;background:var(--success)"></div></div><span class="prog-val">100%</span></div>
+              <div class="prog-row"><span class="prog-label">Zephyr recall (6 drivers)</span><div class="prog-bg"><div class="prog-bar" style="width:89.5%;background:var(--success)"></div></div><span class="prog-val">89.5%</span></div>
+              <div class="prog-row"><span class="prog-label">ASIL-D/B recall</span><div class="prog-bg"><div class="prog-bar" style="width:100%;background:var(--success)"></div></div><span class="prog-val">100%</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title"><i class="ti ti-clock"></i>Pipeline performance</span></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+            <div style="padding:14px 16px;border-right:1px solid var(--border)"><div class="metric-label">HSIG construction</div><div style="font-size:20px;font-weight:600;color:var(--text)">4.2s</div><div class="metric-sub">100 registers · 50 binaries</div></div>
+            <div style="padding:14px 16px;border-right:1px solid var(--border)"><div class="metric-label">Drift analysis</div><div style="font-size:20px;font-weight:600;color:var(--text)">0.3s</div><div class="metric-sub">O(V + E)</div></div>
+            <div style="padding:14px 16px;border-right:1px solid var(--border)"><div class="metric-label">Serialization</div><div style="font-size:20px;font-weight:600;color:var(--text)">0.8s</div><div class="metric-sub">65.3 KB JSON output</div></div>
+            <div style="padding:14px 16px"><div class="metric-label">BOM triad query</div><div style="font-size:20px;font-weight:600;color:var(--text)">0.1s</div><div class="metric-sub">Per CVE traversal</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HSIG EXPLORER -->
+      <div id="v-hsig" class="view">
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="ti ti-layers-intersect"></i>Node layers</span></div>
+            <div class="layer-row"><div class="layer-dot" style="background:#8b5cf6"></div><span class="layer-lbl">L0</span><span class="layer-name">Assessment artifacts</span><span class="layer-count">3</span></div>
+            <div class="layer-row"><div class="layer-dot" style="background:var(--danger)"></div><span class="layer-lbl">L1</span><span class="layer-name">Safety-critical functions</span><span class="layer-count">4</span></div>
+            <div class="layer-row"><div class="layer-dot" style="background:#f97316"></div><span class="layer-lbl">L2</span><span class="layer-name">OS and device drivers</span><span class="layer-count">8</span></div>
+            <div class="layer-row"><div class="layer-dot" style="background:var(--warning)"></div><span class="layer-lbl">L3</span><span class="layer-name">Firmware binaries</span><span class="layer-count">6</span></div>
+            <div class="layer-row"><div class="layer-dot" style="background:var(--accent)"></div><span class="layer-lbl">L4</span><span class="layer-name">Memory-mapped interfaces ★</span><span class="layer-count">35</span></div>
+            <div class="layer-row"><div class="layer-dot" style="background:var(--success)"></div><span class="layer-lbl">L5</span><span class="layer-name">RTL and hardware modules</span><span class="layer-count">6</span></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="ti ti-arrows-exchange"></i>Typed edge vocabulary (8 types)</span></div>
+            <div class="edge-row"><span class="edge-name">IMPLEMENTS</span><span class="edge-domain">L5 → L4</span></div>
+            <div class="edge-row"><span class="edge-name">EXPOSES</span><span class="edge-domain">L4 → L2/L3</span></div>
+            <div class="edge-row"><span class="edge-name">CONSUMES</span><span class="edge-domain">L2/L3 → L4</span></div>
+            <div class="edge-row"><span class="edge-name novel">GENERATED-FROM ★</span><span class="edge-domain" style="color:var(--success-text)">L5 → L5 (central novel contribution)</span></div>
+            <div class="edge-row"><span class="edge-name">DEPENDS-ON</span><span class="edge-domain">L1/L2/L3 → L4</span></div>
+            <div class="edge-row"><span class="edge-name" style="color:var(--danger-text)">TRUST-BOUNDARY</span><span class="edge-domain">L* → L*</span></div>
+            <div class="edge-row"><span class="edge-name">RECONFIGURES</span><span class="edge-domain">L3/L5 → L4/L5</span></div>
+            <div class="edge-row"><span class="edge-name">VALIDATES</span><span class="edge-domain">L0 → V ∪ E</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title"><i class="ti ti-table"></i>L4 interface nodes — BrakeControlECU IBOM</span></div>
+          <table>
+            <thead><tr><th>Interface ID</th><th>Base address</th><th>Type</th><th>ASIL</th><th>Temporal validity</th><th>VEX status</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">IF-BRAKEACTUATION-001</td><td class="mono">0x40020000</td><td>MMIO region</td><td><span class="sev sev-critical">ASIL-D</span></td><td class="mono">hw-rev-2.0</td><td><span class="sev sev-high">under review</span></td></tr>
+              <tr><td class="mono">IF-ABS-CTL-002</td><td class="mono">0x40020100</td><td>MMIO region</td><td><span class="sev sev-high">ASIL-B</span></td><td class="mono">hw-rev-2.0</td><td><span class="sev sev-pass">not_affected</span></td></tr>
+              <tr><td class="mono">IF-HLS-THRESHOLD-001</td><td class="mono">0x10 → 0x18</td><td>AXI4-Lite</td><td><span class="sev sev-none">None</span></td><td class="mono">build-cfg-v1.2</td><td><span class="sev sev-critical">affected</span></td></tr>
+              <tr><td class="mono">IF-DMA1-S1CR-NEW</td><td class="mono">0x40026028</td><td>DMA channel</td><td><span class="sev sev-none">None</span></td><td class="mono">pending validation</td><td><span class="sev sev-high">under review</span></td></tr>
+              <tr><td class="mono">IF-SAFETY_MON-STATUS</td><td class="mono">0x40020200</td><td>Register</td><td><span class="sev sev-critical">ASIL-D</span></td><td class="mono">hw-rev-2.0</td><td><span class="sev sev-pass">not_affected</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DRIFT ANALYSIS -->
+      <div id="v-drift" class="view">
+        <div class="metrics">
+          <div class="metric-card"><div class="metric-label">Drift events</div><div class="metric-val danger">9</div><div class="metric-sub">6 scenarios injected</div></div>
+          <div class="metric-card"><div class="metric-label">CRITICAL</div><div class="metric-val danger">2</div><div class="metric-sub">MMIO address shifts</div></div>
+          <div class="metric-card"><div class="metric-label">HIGH</div><div class="metric-val warning">6</div><div class="metric-sub">Various classes</div></div>
+          <div class="metric-card"><div class="metric-label">SBOM-only detected</div><div class="metric-val">0/6</div><div class="metric-sub">Structural gap confirmed</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title"><i class="ti ti-activity"></i>classify_drift(HSIG_t0, HSIG_t1) — BrakeControlECU v3.1.1 → v3.1.2</span>
+            <span class="badge badge-success">6/6 detected · pipeline 0.3s</span>
+          </div>
+          <table>
+            <thead><tr><th>Drift event type</th><th>Target interface</th><th>Detail</th><th>Severity</th><th>IBOM</th><th>SBOM-only</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">MMIO_ADDRESS_SHIFTED</td><td class="mono">IF-BRAKE_CTL-STATUS</td><td style="font-size:11px;color:var(--text-muted)">0x40020000 → 0x40024000 (crosses CAN trust boundary)</td><td><span class="sev sev-critical">CRITICAL</span></td><td class="detect-yes">✓</td><td class="detect-no">✗</td></tr>
+              <tr><td class="mono">MMIO_ADDRESS_SHIFTED</td><td class="mono">IF-CAN_GW-ACCESS_LIMIT</td><td style="font-size:11px;color:var(--text-muted)">Trust boundary weakened</td><td><span class="sev sev-critical">CRITICAL</span></td><td class="detect-yes">✓</td><td class="detect-no">✗</td></tr>
+              <tr><td class="mono">HLS_LINEAGE_BREAK</td><td class="mono">IF-HLS-THRESHOLD-001</td><td style="font-size:11px;color:var(--text-muted)">pipeline-ii: disabled → 1; offset 0x10 → 0x18</td><td><span class="sev sev-high">HIGH</span></td><td class="detect-yes">✓</td><td class="detect-no">✗</td></tr>
+              <tr><td class="mono">INTERFACE_RETIRED</td><td class="mono">IF-TIM2-CR1</td><td style="font-size:11px;color:var(--text-muted)">3 active consumers still present</td><td><span class="sev sev-high">HIGH</span></td><td class="detect-yes">✓</td><td class="detect-no">✗</td></tr>
+              <tr><td class="mono">UNVALIDATED_IF_ADDED</td><td class="mono">IF-DMA1-S1CR-NEW</td><td style="font-size:11px;color:var(--text-muted)">No VALIDATES edge present</td><td><span class="sev sev-high">HIGH</span></td><td class="detect-yes">✓</td><td class="detect-no">✗</td></tr>
+              <tr><td class="mono">INTERRUPT_REMAPPED</td><td class="mono">IF-ABS_CTL-IRQ_STATUS</td><td style="font-size:11px;color:var(--text-muted)">Access mode RW → WO</td><td><span class="sev sev-medium">MEDIUM</span></td><td class="detect-yes">✓</td><td class="detect-no">✗</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title"><i class="ti ti-check"></i>Benign update false positive analysis</span></div>
+          <table>
+            <thead><tr><th>Scenario</th><th>Change</th><th>Drift events</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>Firmware version bump</td><td style="font-size:11px;color:var(--text-muted)">brake_driver 3.1.2 → 3.1.3 (no MMIO change)</td><td>0</td><td><span class="sev sev-pass">PASS</span></td></tr>
+              <tr><td>SVD doc correction</td><td style="font-size:11px;color:var(--text-muted)">Description text only; no address change</td><td>0</td><td><span class="sev sev-pass">PASS</span></td></tr>
+              <tr><td>LLVM optimization change</td><td style="font-size:11px;color:var(--text-muted)">-O2 → -O3; no volatile targets change</td><td>0</td><td><span class="sev sev-pass">PASS</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BOM TRIAD -->
+      <div id="v-triad" class="view">
+        <div class="triad-grid">
+          <div class="triad-card">
+            <div class="triad-title">SBOM (CycloneDX)</div>
+            <div class="triad-item"><i class="ti ti-package"></i>brake_driver@3.1.2</div>
+            <div class="triad-item"><i class="ti ti-package"></i>can_stack@2.0.1</div>
+            <div class="triad-item"><i class="ti ti-package"></i>rtos_core@5.3.0</div>
+            <div class="triad-item"><i class="ti ti-package"></i>hls_sigproc@1.2.0</div>
+          </div>
+          <div class="triad-arrow"><i class="ti ti-arrows-exchange"></i></div>
+          <div class="triad-card ibom">
+            <div class="triad-title">IBOM — connective tissue</div>
+            <div class="triad-item"><i class="ti ti-circuit-diode"></i>35 L4 interface nodes</div>
+            <div class="triad-item"><i class="ti ti-arrows-exchange"></i>66 typed edges (8 classes)</div>
+            <div class="triad-item"><i class="ti ti-clock"></i>Temporal validity model</div>
+            <div class="triad-item"><i class="ti ti-shield"></i>Trust boundary edges</div>
+          </div>
+          <div class="triad-arrow"><i class="ti ti-arrows-exchange"></i></div>
+          <div class="triad-card">
+            <div class="triad-title">HBOM (CISA)</div>
+            <div class="triad-item"><i class="ti ti-cpu"></i>STM32F407 MCU</div>
+            <div class="triad-item"><i class="ti ti-cpu"></i>FPGA sigproc IP</div>
+            <div class="triad-item"><i class="ti ti-cpu"></i>CAN transceiver</div>
+            <div class="triad-item"><i class="ti ti-cpu"></i>ABS wheel sensor</div>
+          </div>
+        </div>
+        <div class="query-box">
+          <div class="query-label">"Does vulnerability X have a write-path to safety-critical register Z?" — 6-step BOM-triad traversal</div>
+          <div class="qstep"><span class="qnum">1</span><span class="qtext">Locate affected component in SBOM via CVE-ID</span><span class="qresult">resolved</span></div>
+          <div class="qstep"><span class="qnum">2</span><span class="qtext">Resolve IBOM node via PURL cross-reference</span><span class="qresult">resolved</span></div>
+          <div class="qstep"><span class="qnum">3</span><span class="qtext">Traverse CONSUMES / DEPENDS-ON edges to L4 interface</span><span class="qresult">traversed</span></div>
+          <div class="qstep"><span class="qnum">4</span><span class="qtext">Check safety classification (ASIL/SIL) via HBOM</span><span class="qresult">checked</span></div>
+          <div class="qstep"><span class="qnum">5</span><span class="qtext">Evaluate TRUST-BOUNDARY crossings on path</span><span class="qresult">evaluated</span></div>
+          <div class="qstep"><span class="qnum">6</span><span class="qtext">Check temporal validity of traversed edges</span><span class="qresult">valid</span></div>
+        </div>
+        <div class="metrics">
+          <div class="metric-card"><div class="metric-label">NO_WRITE_PATH → VEX not_affected (auto)</div><div class="metric-val success">60</div><div class="metric-sub">of 100 CWE-1194 instances</div></div>
+          <div class="metric-card"><div class="metric-label">Path mapped to L4 node</div><div class="metric-val">25</div><div class="metric-sub">Register path identified</div></div>
+          <div class="metric-card"><div class="metric-label">Safety-critical reached</div><div class="metric-val warning">15</div><div class="metric-sub">ASIL-D/B interfaces</div></div>
+          <div class="metric-card"><div class="metric-label">CRITICAL trust boundary</div><div class="metric-val danger">5</div><div class="metric-sub">Immediate remediation</div></div>
+        </div>
+      </div>
+
+      <!-- CWE COVERAGE -->
+      <div id="v-cwe" class="view">
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="ti ti-shield-check"></i>MITRE Hardware CWE coverage</span></div>
+            <table>
+              <thead><tr><th>Weakness class</th><th>CWE IDs</th><th>SBOM/HBOM</th><th>IBOM</th></tr></thead>
+              <tbody>
+                <tr><td>Register access and lock bits</td><td class="mono">1262, 1231</td><td class="detect-no" style="font-size:13px">✗</td><td><span class="sev sev-pass">Full</span></td></tr>
+                <tr><td>Protected memory overlaps</td><td class="mono">1260, 1274</td><td class="detect-no" style="font-size:13px">✗</td><td><span class="sev sev-pass">Full</span></td></tr>
+                <tr><td>Interconnect isolation</td><td class="mono">1189, 1331</td><td class="detect-no" style="font-size:13px">✗</td><td><span class="sev sev-pass">Full</span></td></tr>
+                <tr><td>Debug interface exposure</td><td class="mono">1191, 1244</td><td><span class="sev sev-none">Partial</span></td><td><span class="sev sev-high">High</span></td></tr>
+                <tr><td>Fault recovery state drift</td><td class="mono">1247, 1332</td><td class="detect-no" style="font-size:13px">✗</td><td><span class="sev sev-medium">Partial</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="ti ti-chart-bar"></i>Coverage by category</span></div>
+            <div class="cwe-bar-wrap">
+              <div class="cwe-row"><span class="cwe-label">Register access</span><div class="cwe-bg"><div class="cwe-fill" style="width:100%;background:var(--success)"></div></div><span class="cwe-val" style="color:var(--success-text)">Full</span></div>
+              <div class="cwe-row"><span class="cwe-label">Memory overlaps</span><div class="cwe-bg"><div class="cwe-fill" style="width:100%;background:var(--success)"></div></div><span class="cwe-val" style="color:var(--success-text)">Full</span></div>
+              <div class="cwe-row"><span class="cwe-label">Interconnect</span><div class="cwe-bg"><div class="cwe-fill" style="width:100%;background:var(--success)"></div></div><span class="cwe-val" style="color:var(--success-text)">Full</span></div>
+              <div class="cwe-row"><span class="cwe-label">Debug interfaces</span><div class="cwe-bg"><div class="cwe-fill" style="width:75%;background:var(--accent)"></div></div><span class="cwe-val" style="color:var(--accent-text)">High</span></div>
+              <div class="cwe-row"><span class="cwe-label">Fault recovery</span><div class="cwe-bg"><div class="cwe-fill" style="width:55%;background:var(--warning)"></div></div><span class="cwe-val" style="color:var(--warning-text)">Partial</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title"><i class="ti ti-database"></i>Dataset — Zenodo DOI: 10.5281/zenodo.21384771</span></div>
+          <table>
+            <thead><tr><th>File</th><th>Contents</th><th>Size</th><th>Verifies</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">cwe_ibom_query_results.csv</td><td>100 CWE-1194 instance query results</td><td>24 KB</td><td>§9.4 outcomes table</td></tr>
+              <tr><td class="mono">zephyr_consumes_edges.csv</td><td>6 driver extraction results</td><td>12 KB</td><td>89.5% recall claim</td></tr>
+              <tr><td class="mono">classify_drift_detailed_results.json</td><td>Full drift event detail</td><td>5 KB</td><td>6/6 detection</td></tr>
+              <tr><td class="mono">benign_update_results.json</td><td>3 benign scenarios</td><td>2 KB</td><td>0 false positives</td></tr>
+              <tr><td class="mono">ibom_brakecontrol_baseline.json</td><td>Complete IBOM document</td><td>67 KB</td><td>35 interfaces, 66 edges</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COMPLIANCE -->
+      <div id="v-compliance" class="view">
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="ti ti-file-euro"></i>EU CRA Annex I mapping</span></div>
+            <table>
+              <thead><tr><th>CRA obligation</th><th>Article</th><th>IBOM capability</th></tr></thead>
+              <tbody>
+                <tr><td>Limit attack surfaces incl. external interfaces</td><td class="mono">I §1(2)(b)</td><td>Interface inventory detects unvalidated expansions</td></tr>
+                <tr><td>Updates must not introduce new security risks</td><td class="mono">I §1(2)(g)</td><td>Drift assertions + Valid HSIG Refinement</td></tr>
+                <tr><td>Vulnerability addressability</td><td class="mono">I §1(2)(g)</td><td>BOM-triad query + automated VEX not_affected</td></tr>
+                <tr><td>Secure update delivery documentation</td><td class="mono">Part II §2</td><td>VALIDATES edges — machine-readable conformity evidence</td></tr>
+                <tr><td>Vulnerability disclosure</td><td class="mono">Article 14</td><td>Interface-level VEX linkage</td></tr>
+                <tr><td>Conformity assessment documentation</td><td class="mono">Article 32</td><td>Drift assertions as machine-verifiable stability evidence</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="ti ti-certificate"></i>Drift assertions — BrakeControlECU</span></div>
+            <table>
+              <thead><tr><th>Assertion ID</th><th>Interface</th><th>Covers</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">DA-001</td><td class="mono">IF-BRAKE_CTL-STATUS</td><td style="font-size:11px;color:var(--text-muted)">base-address, register-layout, trust-boundary</td><td><span class="sev sev-critical">VIOLATED</span></td></tr>
+                <tr><td class="mono">DA-002</td><td class="mono">IF-ABS_CTL-WHEEL_SPEED</td><td style="font-size:11px;color:var(--text-muted)">access-timing, safety-classification</td><td><span class="sev sev-pass">PASS</span></td></tr>
+                <tr><td class="mono">DA-003</td><td class="mono">IF-SAFETY_MON-SYS_STATUS</td><td style="font-size:11px;color:var(--text-muted)">base-address, register-layout</td><td><span class="sev sev-pass">PASS</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title"><i class="ti ti-route"></i>Adoption roadmap</span></div>
+          <table>
+            <thead><tr><th>Step</th><th>Action</th><th>Target</th><th>Timeline</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Open-source reference implementation + prototype</td><td>GitHub public repository</td><td>Q3 2026</td><td><span class="sev sev-pass">Complete</span></td></tr>
+              <tr><td>2</td><td>CycloneDX Hardware FWG participation (Issue #959)</td><td>CycloneDX v2.x</td><td>Q4 2026</td><td><span class="sev sev-high">In progress</span></td></tr>
+              <tr><td>3</td><td>Vendor toolchain adoption (Zephyr, AUTOSAR)</td><td>Semiconductor vendors</td><td>2027</td><td><span class="sev sev-none">Planned</span></td></tr>
+              <tr><td>4</td><td>Normative standardization via ECMA / LF SPDX</td><td>ECMA / Linux Foundation SPDX</td><td>2027–2028</td><td><span class="sev sev-none">Planned</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const titles={
+  dashboard:['Dashboard','IBOM health and interface overview — BrakeControlECU v3.1.2'],
+  hsig:['HSIG explorer','Hardware-Software Interaction Graph — node layers and edge vocabulary'],
+  drift:['Drift analysis','classify_drift(HSIG_t0, HSIG_t1) — BrakeControlECU v3.1.1 → v3.1.2'],
+  triad:['BOM triad','SBOM + IBOM + HBOM cross-referenced via PURL — CVE-to-register query'],
+  cwe:['CWE coverage','MITRE Hardware CWE-1194 representational coverage analysis'],
+  compliance:['Compliance','EU CRA Annex I mapping, drift assertions, and adoption roadmap']
+};
+function show(id,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>{n.classList.remove('active');n.removeAttribute('aria-current')});
+  document.getElementById('v-'+id).classList.add('active');
+  btn.classList.add('active');
+  btn.setAttribute('aria-current','page');
+  const[t,s]=titles[id];
+  document.getElementById('page-title').textContent=t;
+  document.getElementById('page-sub').textContent=s;
+}
+</script>
+</body>
+</html>
